@@ -11,14 +11,14 @@ try:
 except ImportError:
     StaticPathConfig = None
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID, Platform
+from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 
 from .const import DATA_ENTITIES, DOMAIN, SERVICE_MARK_COMPLETE
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[str] = ["sensor"]
 
 SERVICE_SCHEMA = vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.entity_id})
 
@@ -50,13 +50,20 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a task config entry."""
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    if hasattr(hass.config_entries, "async_forward_entry_setups"):
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+        return True
+
+    await hass.config_entries.async_forward_entry_setup(entry, "sensor")
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a task config entry."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if hasattr(hass.config_entries, "async_unload_platforms"):
+        return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+    return await hass.config_entries.async_forward_entry_unload(entry, "sensor")
 
 
 async def _async_register_static_path(hass: HomeAssistant) -> None:

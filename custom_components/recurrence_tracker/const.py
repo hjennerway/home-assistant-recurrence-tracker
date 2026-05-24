@@ -1,5 +1,6 @@
 DOMAIN = "recurrence_tracker"
 
+CONF_ICON = "icon"
 CONF_FREQUENCY_DAYS = "frequency_days"
 CONF_TASK_NAME = "task_name"
 

@@ -7,10 +7,8 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_ICON
-import homeassistant.helpers.config_validation as cv
 
-from .const import CONF_FREQUENCY_DAYS, CONF_TASK_NAME, DOMAIN
+from .const import CONF_FREQUENCY_DAYS, CONF_ICON, CONF_TASK_NAME, DOMAIN
 
 DEFAULT_ICON = "mdi:check-circle-outline"
 
@@ -22,7 +20,7 @@ class RecurrenceTrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.ConfigFlowResult:
+    ) -> dict[str, Any]:
         """Create a recurring task."""
         errors: dict[str, str] = {}
 
@@ -49,9 +47,9 @@ class RecurrenceTrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_TASK_NAME): str,
-                    vol.Required(CONF_ICON, default=DEFAULT_ICON): cv.icon,
+                    vol.Required(CONF_ICON, default=DEFAULT_ICON): str,
                     vol.Required(CONF_FREQUENCY_DAYS, default=7): vol.All(
-                        cv.positive_int, vol.Range(min=1)
+                        vol.Coerce(int), vol.Range(min=1)
                     ),
                 }
             ),

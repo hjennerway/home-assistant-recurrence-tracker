@@ -6,7 +6,6 @@ from datetime import date
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_ICON
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_change
@@ -19,6 +18,7 @@ from .const import (
     ATTR_LAST_COMPLETED,
     ATTR_TASK_NAME,
     CONF_FREQUENCY_DAYS,
+    CONF_ICON,
     CONF_TASK_NAME,
     DATA_ENTITIES,
     DOMAIN,
