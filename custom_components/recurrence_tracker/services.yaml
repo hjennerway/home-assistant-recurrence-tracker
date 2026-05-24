@@ -1,0 +1,11 @@
+mark_complete:
+  name: Mark complete
+  description: Set a recurrence tracker task completion date to today.
+  fields:
+    entity_id:
+      name: Task
+      description: Recurrence tracker task to mark complete.
+      required: true
+      selector:
+        entity:
+          integration: recurrence_tracker

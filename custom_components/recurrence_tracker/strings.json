@@ -1,0 +1,19 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add recurring task",
+        "description": "Create a recurring task to track in Home Assistant.",
+        "data": {
+          "task_name": "Name",
+          "icon": "Icon",
+          "frequency_days": "Frequency in days"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Enter a task name.",
+      "frequency_required": "Enter a frequency of at least 1 day."
+    }
+  }
+}

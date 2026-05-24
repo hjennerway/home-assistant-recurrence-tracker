@@ -1,0 +1,76 @@
+"""Recurring task tracker integration."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import voluptuous as vol
+
+try:
+    from homeassistant.components.http import StaticPathConfig
+except ImportError:
+    StaticPathConfig = None
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_ENTITY_ID, Platform
+from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.exceptions import HomeAssistantError
+import homeassistant.helpers.config_validation as cv
+
+from .const import DATA_ENTITIES, DOMAIN, SERVICE_MARK_COMPLETE
+
+PLATFORMS: list[Platform] = [Platform.SENSOR]
+
+SERVICE_SCHEMA = vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.entity_id})
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the integration domain."""
+    hass.data.setdefault(DOMAIN, {DATA_ENTITIES: {}})
+
+    await _async_register_static_path(hass)
+
+    async def async_handle_mark_complete(call: ServiceCall) -> None:
+        entity_id = call.data[ATTR_ENTITY_ID]
+        entity = hass.data[DOMAIN][DATA_ENTITIES].get(entity_id)
+
+        if entity is None:
+            raise HomeAssistantError(f"{entity_id} is not a recurrence tracker task")
+
+        await entity.async_mark_complete()
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_MARK_COMPLETE,
+        async_handle_mark_complete,
+        schema=SERVICE_SCHEMA,
+    )
+
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up a task config entry."""
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a task config entry."""
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def _async_register_static_path(hass: HomeAssistant) -> None:
+    """Expose the bundled Lovelace card JavaScript."""
+    path = Path(__file__).parent / "www"
+    url_path = f"/{DOMAIN}"
+
+    if (
+        StaticPathConfig is not None
+        and hasattr(hass.http, "async_register_static_paths")
+    ):
+        await hass.http.async_register_static_paths(
+            [StaticPathConfig(url_path, str(path), cache_headers=True)]
+        )
+        return
+
+    hass.http.register_static_path(url_path, str(path), cache_headers=True)
