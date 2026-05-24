@@ -26,6 +26,11 @@ class RecurrenceTrackerCard extends HTMLElement {
     const frequency = Number(attrs.frequency_days);
     const days = Number(stateObj.state);
     const hasCompletion = Number.isFinite(days);
+    const elapsedPercent =
+      hasCompletion && Number.isFinite(frequency) && frequency > 0
+        ? (days / frequency) * 100
+        : 100;
+    const palette = this._getPalette(elapsedPercent);
     const isDue = hasCompletion && Number.isFinite(frequency) && days >= frequency;
     const daysLabel = hasCompletion
       ? `${days} ${days === 1 ? "day" : "days"}`
@@ -40,6 +45,9 @@ class RecurrenceTrackerCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         ha-card {
+          --recurrence-tracker-accent: ${palette.accent};
+          background: ${palette.background};
+          border: 1px solid ${palette.border};
           cursor: pointer;
           outline: none;
           overflow: hidden;
@@ -60,9 +68,10 @@ class RecurrenceTrackerCard extends HTMLElement {
 
         .icon {
           align-items: center;
-          background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+          background: rgba(255, 255, 255, 0.64);
           border-radius: 8px;
-          color: var(--primary-color);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+          color: var(--recurrence-tracker-accent);
           display: flex;
           height: 48px;
           justify-content: center;
@@ -98,7 +107,7 @@ class RecurrenceTrackerCard extends HTMLElement {
         }
 
         .status {
-          color: ${isDue ? "var(--error-color)" : "var(--secondary-text-color)"};
+          color: ${palette.status};
           font-size: 0.78rem;
           font-weight: 600;
           line-height: 1.2;
@@ -151,6 +160,33 @@ class RecurrenceTrackerCard extends HTMLElement {
 
   getCardSize() {
     return 2;
+  }
+
+  _getPalette(elapsedPercent) {
+    if (elapsedPercent <= 40) {
+      return {
+        accent: "#16803a",
+        background: "linear-gradient(135deg, #f3ffe8 0%, #c9f8a8 50%, #7edb73 100%)",
+        border: "rgba(22, 128, 58, 0.3)",
+        status: "#126c31",
+      };
+    }
+
+    if (elapsedPercent <= 80) {
+      return {
+        accent: "#a45f00",
+        background: "linear-gradient(135deg, #fff7d8 0%, #ffd66c 52%, #ffad2f 100%)",
+        border: "rgba(164, 95, 0, 0.32)",
+        status: "#855000",
+      };
+    }
+
+    return {
+      accent: "#b92323",
+      background: "linear-gradient(135deg, #ffe9e5 0%, #ff9e8c 52%, #f04444 100%)",
+      border: "rgba(185, 35, 35, 0.34)",
+      status: "#9f1d1d",
+    };
   }
 
   _renderUnavailable() {
