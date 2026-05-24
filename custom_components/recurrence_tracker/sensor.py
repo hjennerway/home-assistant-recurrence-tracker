@@ -22,6 +22,7 @@ from .const import (
     CONF_LAST_COMPLETED,
     CONF_TASK_NAME,
     DATA_ENTITIES,
+    DATA_ENTITIES_BY_ENTRY_ID,
     DOMAIN,
     STORAGE_VERSION,
 )
@@ -106,6 +107,9 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
 
         if self.entity_id is not None:
             self._hass.data[DOMAIN][DATA_ENTITIES][self.entity_id] = self
+        self._hass.data[DOMAIN][DATA_ENTITIES_BY_ENTRY_ID][
+            self._entry.entry_id
+        ] = self
 
         self.async_on_remove(
             async_track_time_change(
@@ -121,23 +125,36 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
         """Unregister this entity from the service lookup."""
         if self.entity_id is not None:
             self._hass.data[DOMAIN][DATA_ENTITIES].pop(self.entity_id, None)
+        self._hass.data[DOMAIN][DATA_ENTITIES_BY_ENTRY_ID].pop(
+            self._entry.entry_id, None
+        )
 
     async def async_mark_complete(self) -> None:
         """Mark the task complete today."""
-        self._last_completed = dt_util.now().date()
-        await self._save_last_completed()
+        await self.async_set_last_completed(dt_util.now().date())
+
+    async def async_set_last_completed(
+        self,
+        last_completed: date,
+        persist_options: bool = True,
+    ) -> None:
+        """Set and persist the task completion date."""
+        self._last_completed = last_completed
+        await self._save_last_completed(persist_options)
         self.async_write_ha_state()
 
-    async def _save_last_completed(self) -> None:
+    async def _save_last_completed(self, persist_options: bool = True) -> None:
         """Persist the completion date."""
         last_completed = self._last_completed.isoformat()
-        options = dict(self._entry.options)
-        options[CONF_LAST_COMPLETED] = last_completed
 
         if (
+            persist_options
+            and
             self._entry.options.get(CONF_LAST_COMPLETED) != last_completed
             and hasattr(self._hass.config_entries, "async_update_entry")
         ):
+            options = dict(self._entry.options)
+            options[CONF_LAST_COMPLETED] = last_completed
             self._hass.config_entries.async_update_entry(
                 self._entry,
                 options=options,

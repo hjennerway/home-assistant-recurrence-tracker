@@ -15,6 +15,7 @@ from .const import (
     CONF_ICON,
     CONF_LAST_COMPLETED,
     CONF_TASK_NAME,
+    DATA_ENTITIES_BY_ENTRY_ID,
     DOMAIN,
 )
 
@@ -94,9 +95,21 @@ class RecurrenceTrackerOptionsFlow(config_entries.OptionsFlow):
                     errors[CONF_LAST_COMPLETED] = "invalid_date"
 
             if not errors:
+                entity = self.hass.data.get(DOMAIN, {}).get(
+                    DATA_ENTITIES_BY_ENTRY_ID, {}
+                ).get(self._config_entry.entry_id)
+
+                if entity is not None and last_completed:
+                    await entity.async_set_last_completed(
+                        date.fromisoformat(last_completed),
+                        persist_options=False,
+                    )
+
                 return self.async_create_entry(
                     title="",
-                    data={CONF_LAST_COMPLETED: last_completed},
+                    data={CONF_LAST_COMPLETED: last_completed}
+                    if last_completed
+                    else {},
                 )
 
         current_last_completed = self._config_entry.options.get(CONF_LAST_COMPLETED, "")

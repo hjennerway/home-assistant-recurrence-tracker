@@ -16,7 +16,7 @@ Copy `custom_components/recurrence_tracker` into your Home Assistant `custom_com
 
 Add tasks from **Settings > Devices & services > Add integration > Recurrence Tracker**. Repeat the flow for each task you want to track.
 
-To override a task's last reset date, open the task's Recurrence Tracker integration entry, choose **Configure**, and enter a date in `YYYY-MM-DD` format. Leave the field blank to treat the task as never completed.
+To override a task's last reset date, open the task's Recurrence Tracker integration entry, choose **Configure**, and enter a date in `YYYY-MM-DD` format.
 
 ## Add the card
 

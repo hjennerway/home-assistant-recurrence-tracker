@@ -20,7 +20,7 @@
     "step": {
       "init": {
         "title": "Task options",
-        "description": "Override the date this task was last reset or completed. Leave blank if it has never been completed.",
+        "description": "Override the date this task was last reset or completed.",
         "data": {
           "last_completed": "Last reset date"
         },
