@@ -99,11 +99,13 @@ class RecurrenceTrackerOptionsFlow(config_entries.OptionsFlow):
                     DATA_ENTITIES_BY_ENTRY_ID, {}
                 ).get(self._config_entry.entry_id)
 
-                if entity is not None and last_completed:
-                    await entity.async_set_last_completed(
-                        date.fromisoformat(last_completed),
-                        persist_options=False,
-                    )
+                if entity is not None:
+                    if last_completed:
+                        await entity.async_set_last_completed(
+                            date.fromisoformat(last_completed)
+                        )
+                    else:
+                        await entity.async_clear_last_completed()
 
                 return self.async_create_entry(
                     title="",

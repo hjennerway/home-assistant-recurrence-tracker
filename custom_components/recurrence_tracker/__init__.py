@@ -16,7 +16,12 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 
-from .const import DATA_ENTITIES, DATA_ENTITIES_BY_ENTRY_ID, DOMAIN, SERVICE_MARK_COMPLETE
+from .const import (
+    DATA_ENTITIES,
+    DATA_ENTITIES_BY_ENTRY_ID,
+    DOMAIN,
+    SERVICE_MARK_COMPLETE,
+)
 
 PLATFORMS: list[str] = ["sensor"]
 
@@ -25,7 +30,9 @@ SERVICE_SCHEMA = vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.entity_id})
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the integration domain."""
-    hass.data.setdefault(DOMAIN, {DATA_ENTITIES: {}, DATA_ENTITIES_BY_ENTRY_ID: {}})
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    domain_data.setdefault(DATA_ENTITIES, {})
+    domain_data.setdefault(DATA_ENTITIES_BY_ENTRY_ID, {})
 
     await _async_register_static_path(hass)
 

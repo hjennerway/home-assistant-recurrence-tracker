@@ -25,6 +25,21 @@ class RecurrenceTrackerCard extends HTMLElement {
     const icon = this.config.icon || attrs.icon || "mdi:check-circle-outline";
     const frequency = Number(attrs.frequency_days);
     const days = Number(stateObj.state);
+    const renderSignature = [
+      stateObj.state,
+      attrs.task_name,
+      attrs.friendly_name,
+      attrs.icon,
+      attrs.frequency_days,
+      this.config.name,
+      this.config.icon,
+    ].join("|");
+
+    if (renderSignature === this._lastRenderSignature) {
+      return;
+    }
+    this._lastRenderSignature = renderSignature;
+
     const hasCompletion = Number.isFinite(days);
     const elapsedPercent =
       hasCompletion && Number.isFinite(frequency) && frequency > 0

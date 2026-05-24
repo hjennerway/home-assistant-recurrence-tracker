@@ -102,9 +102,6 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
                 if last_completed:
                     self._last_completed = self._parse_date(last_completed)
 
-        if self._last_completed:
-            await self._save_last_completed()
-
         if self.entity_id is not None:
             self._hass.data[DOMAIN][DATA_ENTITIES][self.entity_id] = self
         self._hass.data[DOMAIN][DATA_ENTITIES_BY_ENTRY_ID][
@@ -136,30 +133,21 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
     async def async_set_last_completed(
         self,
         last_completed: date,
-        persist_options: bool = True,
     ) -> None:
         """Set and persist the task completion date."""
         self._last_completed = last_completed
-        await self._save_last_completed(persist_options)
+        await self._save_last_completed()
         self.async_write_ha_state()
 
-    async def _save_last_completed(self, persist_options: bool = True) -> None:
+    async def async_clear_last_completed(self) -> None:
+        """Clear the task completion date."""
+        self._last_completed = None
+        await self._store.async_save({ATTR_LAST_COMPLETED: None})
+        self.async_write_ha_state()
+
+    async def _save_last_completed(self) -> None:
         """Persist the completion date."""
         last_completed = self._last_completed.isoformat()
-
-        if (
-            persist_options
-            and
-            self._entry.options.get(CONF_LAST_COMPLETED) != last_completed
-            and hasattr(self._hass.config_entries, "async_update_entry")
-        ):
-            options = dict(self._entry.options)
-            options[CONF_LAST_COMPLETED] = last_completed
-            self._hass.config_entries.async_update_entry(
-                self._entry,
-                options=options,
-            )
-
         await self._store.async_save({ATTR_LAST_COMPLETED: last_completed})
 
     @callback
