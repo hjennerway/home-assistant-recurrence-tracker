@@ -19,6 +19,7 @@ from .const import (
     ATTR_TASK_NAME,
     CONF_FREQUENCY_DAYS,
     CONF_ICON,
+    CONF_LAST_COMPLETED,
     CONF_TASK_NAME,
     DATA_ENTITIES,
     DOMAIN,
@@ -78,18 +79,30 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
 
     async def async_added_to_hass(self) -> None:
         """Restore the stored completion date."""
-        data = await self._store.async_load()
-        if data and data.get(ATTR_LAST_COMPLETED):
-            self._last_completed = self._parse_date(data[ATTR_LAST_COMPLETED])
-        else:
-            last_state = await self.async_get_last_state()
-            last_completed = (
-                last_state.attributes.get(ATTR_LAST_COMPLETED)
-                if last_state is not None
+        configured_last_completed = self._entry.options.get(CONF_LAST_COMPLETED)
+
+        if CONF_LAST_COMPLETED in self._entry.options:
+            self._last_completed = (
+                self._parse_date(configured_last_completed)
+                if configured_last_completed
                 else None
             )
-            if last_completed:
-                self._last_completed = self._parse_date(last_completed)
+        else:
+            data = await self._store.async_load()
+            if data and data.get(ATTR_LAST_COMPLETED):
+                self._last_completed = self._parse_date(data[ATTR_LAST_COMPLETED])
+            else:
+                last_state = await self.async_get_last_state()
+                last_completed = (
+                    last_state.attributes.get(ATTR_LAST_COMPLETED)
+                    if last_state is not None
+                    else None
+                )
+                if last_completed:
+                    self._last_completed = self._parse_date(last_completed)
+
+        if self._last_completed:
+            await self._save_last_completed()
 
         if self.entity_id is not None:
             self._hass.data[DOMAIN][DATA_ENTITIES][self.entity_id] = self
@@ -112,10 +125,25 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
     async def async_mark_complete(self) -> None:
         """Mark the task complete today."""
         self._last_completed = dt_util.now().date()
-        await self._store.async_save(
-            {ATTR_LAST_COMPLETED: self._last_completed.isoformat()}
-        )
+        await self._save_last_completed()
         self.async_write_ha_state()
+
+    async def _save_last_completed(self) -> None:
+        """Persist the completion date."""
+        last_completed = self._last_completed.isoformat()
+        options = dict(self._entry.options)
+        options[CONF_LAST_COMPLETED] = last_completed
+
+        if (
+            self._entry.options.get(CONF_LAST_COMPLETED) != last_completed
+            and hasattr(self._hass.config_entries, "async_update_entry")
+        ):
+            self._hass.config_entries.async_update_entry(
+                self._entry,
+                options=options,
+            )
+
+        await self._store.async_save({ATTR_LAST_COMPLETED: last_completed})
 
     @callback
     def _async_handle_midnight(self, now) -> None:

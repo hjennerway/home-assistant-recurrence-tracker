@@ -15,5 +15,22 @@
       "name_required": "Enter a task name.",
       "frequency_required": "Enter a frequency of at least 1 day."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Task options",
+        "description": "Override the date this task was last reset or completed. Leave blank if it has never been completed.",
+        "data": {
+          "last_completed": "Last reset date"
+        },
+        "data_description": {
+          "last_completed": "Use YYYY-MM-DD."
+        }
+      }
+    },
+    "error": {
+      "invalid_date": "Enter a date in YYYY-MM-DD format."
+    }
   }
 }
