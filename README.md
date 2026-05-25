@@ -14,6 +14,11 @@ Track recurring tasks in Home Assistant and mark them complete from a Lovelace c
 
 Copy `custom_components/recurrence_tracker` into your Home Assistant `custom_components` directory, then restart Home Assistant.
 
+If Home Assistant logs `ImportError: cannot import name 'DATA_ENTITIES_BY_ENTRY_ID'`,
+the deployed integration files are from mixed versions. Replace the whole
+`custom_components/recurrence_tracker` directory with this repository's copy,
+then restart Home Assistant.
+
 Add tasks from **Settings > Devices & services > Add integration > Recurrence Tracker**. Repeat the flow for each task you want to track.
 
 To override a task's last reset date, open the task's Recurrence Tracker integration entry, choose **Configure**, and enter a date in `YYYY-MM-DD` format.
