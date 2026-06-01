@@ -87,6 +87,7 @@ class RecurrenceTrackerCard extends HTMLElement {
 
         .content {
           align-items: center;
+          box-sizing: border-box;
           display: flex;
           gap: 12px;
           min-height: 68px;
@@ -100,6 +101,7 @@ class RecurrenceTrackerCard extends HTMLElement {
           box-shadow: inset 0 1px 0 ${palette.iconHighlight};
           color: var(--recurrence-tracker-accent);
           display: flex;
+          flex: 0 0 48px;
           height: 48px;
           justify-content: center;
           width: 48px;
@@ -119,7 +121,7 @@ class RecurrenceTrackerCard extends HTMLElement {
           font-size: 1.05rem;
           font-weight: 600;
           line-height: 1.25;
-          overflow-wrap: anywhere;
+          overflow-wrap: break-word;
         }
 
         .meta {
@@ -138,6 +140,7 @@ class RecurrenceTrackerCard extends HTMLElement {
           flex: 0 0 auto;
           margin-left: auto;
           min-width: 0;
+          max-width: 45%;
         }
 
         .days {
@@ -165,9 +168,11 @@ class RecurrenceTrackerCard extends HTMLElement {
             display: grid;
             grid-template-columns: auto minmax(0, 1fr);
             grid-template-areas:
-              "icon details"
-              "count count";
-            row-gap: 10px;
+              "icon count"
+              "details details";
+            gap: 10px 12px;
+            min-height: auto;
+            padding: 10px 12px;
           }
 
           .icon {
@@ -179,31 +184,30 @@ class RecurrenceTrackerCard extends HTMLElement {
           }
 
           .count {
-            display: grid;
-            gap: 4px 10px;
             grid-area: count;
-            grid-template-columns: minmax(0, 1fr) auto;
-            justify-self: stretch;
+            justify-self: end;
             margin-left: 0;
+            max-width: 100%;
           }
 
           .days {
             font-size: 1.35rem;
-            text-align: left;
+            text-align: right;
           }
 
           .status {
-            align-self: end;
             margin-top: 0;
+            text-align: right;
           }
         }
 
         @container (max-width: 240px) {
           .content {
             grid-template-areas:
-              "icon details"
-              "count count";
-            grid-template-columns: auto minmax(0, 1fr);
+              "icon"
+              "details"
+              "count";
+            grid-template-columns: minmax(0, 1fr);
           }
 
           .icon {
@@ -216,7 +220,7 @@ class RecurrenceTrackerCard extends HTMLElement {
           }
 
           .count {
-            grid-template-columns: 1fr;
+            justify-self: stretch;
           }
 
           .days,
