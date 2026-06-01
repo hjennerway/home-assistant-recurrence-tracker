@@ -25,6 +25,13 @@ class RecurrenceTrackerCard extends HTMLElement {
     const icon = this.config.icon || attrs.icon || "mdi:check-circle-outline";
     const frequency = Number(attrs.frequency_days);
     const days = Number(stateObj.state);
+    const showDaysAgo = this._shouldShow("show_days_ago");
+    const showFrequency = this._shouldShow("show_frequency");
+    const showName = this._shouldShow("show_name");
+    const showDaysUntilDue = this._shouldShow("show_days_until_due");
+    const showIcon = this._shouldShow("show_icon");
+    const showDetails = showName || showFrequency;
+    const showCount = showDaysAgo || showDaysUntilDue;
     const renderSignature = [
       stateObj.state,
       attrs.task_name,
@@ -33,6 +40,11 @@ class RecurrenceTrackerCard extends HTMLElement {
       attrs.frequency_days,
       this.config.name,
       this.config.icon,
+      showDaysAgo,
+      showFrequency,
+      showName,
+      showDaysUntilDue,
+      showIcon,
     ].join("|");
 
     if (renderSignature === this._lastRenderSignature) {
@@ -74,9 +86,8 @@ class RecurrenceTrackerCard extends HTMLElement {
 
         .content {
           align-items: center;
-          display: grid;
+          display: flex;
           gap: 12px;
-          grid-template-columns: auto 1fr auto;
           min-height: 68px;
           padding: 8px 10px;
         }
@@ -97,6 +108,11 @@ class RecurrenceTrackerCard extends HTMLElement {
           --mdc-icon-size: 28px;
         }
 
+        .details {
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+
         .name {
           color: ${palette.text};
           font-size: 1.05rem;
@@ -110,6 +126,16 @@ class RecurrenceTrackerCard extends HTMLElement {
           font-size: 0.85rem;
           line-height: 1.35;
           margin-top: 4px;
+        }
+
+        .details > :first-child,
+        .count > :first-child {
+          margin-top: 0;
+        }
+
+        .count {
+          flex: 0 0 auto;
+          margin-left: auto;
         }
 
         .days {
@@ -133,12 +159,11 @@ class RecurrenceTrackerCard extends HTMLElement {
 
         @media (max-width: 360px) {
           .content {
-            grid-template-columns: auto 1fr;
+            flex-wrap: wrap;
           }
 
           .count {
-            grid-column: 1 / -1;
-            justify-self: end;
+            flex-basis: 100%;
           }
         }
       </style>
@@ -146,19 +171,47 @@ class RecurrenceTrackerCard extends HTMLElement {
         name
       )} complete">
         <div class="content">
-          <div class="icon">
+          ${
+            showIcon
+              ? `<div class="icon">
             <ha-icon icon="${this._escapeAttr(icon)}"></ha-icon>
-          </div>
-          <div>
-            <div class="name">${this._escapeHtml(name)}</div>
-            <div class="meta">Every ${this._escapeHtml(String(frequency))} ${
-      frequency === 1 ? "day" : "days"
-    }</div>
-          </div>
-          <div class="count">
-            <div class="days">${this._escapeHtml(daysLabel)}</div>
-            <div class="status">${this._escapeHtml(statusLabel)}</div>
-          </div>
+          </div>`
+              : ""
+          }
+          ${
+            showDetails
+              ? `<div class="details">
+            ${
+              showName
+                ? `<div class="name">${this._escapeHtml(name)}</div>`
+                : ""
+            }
+            ${
+              showFrequency
+                ? `<div class="meta">Every ${this._escapeHtml(String(frequency))} ${
+                    frequency === 1 ? "day" : "days"
+                  }</div>`
+                : ""
+            }
+          </div>`
+              : ""
+          }
+          ${
+            showCount
+              ? `<div class="count">
+            ${
+              showDaysAgo
+                ? `<div class="days">${this._escapeHtml(daysLabel)}</div>`
+                : ""
+            }
+            ${
+              showDaysUntilDue
+                ? `<div class="status">${this._escapeHtml(statusLabel)}</div>`
+                : ""
+            }
+          </div>`
+              : ""
+          }
         </div>
       </ha-card>
     `;
@@ -175,6 +228,10 @@ class RecurrenceTrackerCard extends HTMLElement {
 
   getCardSize() {
     return 2;
+  }
+
+  _shouldShow(option) {
+    return this.config[option] !== false;
   }
 
   _getPalette(elapsedPercent) {

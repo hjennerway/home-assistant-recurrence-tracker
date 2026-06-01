@@ -46,7 +46,15 @@ type: custom:recurrence-tracker-card
 entity: sensor.water_plants
 name: Water plants
 icon: mdi:watering-can
+show_days_ago: true
+show_frequency: true
+show_name: true
+show_days_until_due: true
+show_icon: true
 ```
+
+Set any `show_*` option to `false` to hide that part of the card. The `name`
+option overrides the display name on this card only.
 
 Tapping anywhere on the card asks:
 
