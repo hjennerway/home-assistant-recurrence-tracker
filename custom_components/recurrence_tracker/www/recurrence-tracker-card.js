@@ -83,9 +83,9 @@ class RecurrenceTrackerCard extends HTMLElement {
 
         .icon {
           align-items: center;
-          background: rgba(255, 255, 255, 0.64);
+          background: ${palette.iconBackground};
           border-radius: 8px;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+          box-shadow: inset 0 1px 0 ${palette.iconHighlight};
           color: var(--recurrence-tracker-accent);
           display: flex;
           height: 48px;
@@ -98,7 +98,7 @@ class RecurrenceTrackerCard extends HTMLElement {
         }
 
         .name {
-          color: var(--primary-text-color);
+          color: ${palette.text};
           font-size: 1.05rem;
           font-weight: 600;
           line-height: 1.25;
@@ -106,14 +106,14 @@ class RecurrenceTrackerCard extends HTMLElement {
         }
 
         .meta {
-          color: var(--secondary-text-color);
+          color: ${palette.meta};
           font-size: 0.85rem;
           line-height: 1.35;
           margin-top: 4px;
         }
 
         .days {
-          color: var(--primary-text-color);
+          color: ${palette.text};
           font-size: 1.55rem;
           font-weight: 700;
           line-height: 1;
@@ -180,27 +180,39 @@ class RecurrenceTrackerCard extends HTMLElement {
   _getPalette(elapsedPercent) {
     if (elapsedPercent < 40) {
       return {
-        accent: "#16803a",
-        background: "linear-gradient(135deg, #f3ffe8 0%, #c9f8a8 50%, #7edb73 100%)",
-        border: "rgba(22, 128, 58, 0.3)",
-        status: "#126c31",
+        accent: "#86efac",
+        background: "linear-gradient(135deg, #123524 0%, #166534 56%, #15803d 100%)",
+        border: "rgba(134, 239, 172, 0.45)",
+        iconBackground: "rgba(255, 255, 255, 0.12)",
+        iconHighlight: "rgba(255, 255, 255, 0.18)",
+        meta: "rgba(240, 253, 244, 0.82)",
+        status: "#bbf7d0",
+        text: "#ffffff",
       };
     }
 
     if (elapsedPercent <= 80) {
       return {
-        accent: "#a45f00",
-        background: "linear-gradient(135deg, #fff7d8 0%, #ffd66c 52%, #ffad2f 100%)",
-        border: "rgba(164, 95, 0, 0.32)",
-        status: "#855000",
+        accent: "#fcd34d",
+        background: "linear-gradient(135deg, #3b2f0b 0%, #854d0e 56%, #b45309 100%)",
+        border: "rgba(252, 211, 77, 0.48)",
+        iconBackground: "rgba(255, 255, 255, 0.12)",
+        iconHighlight: "rgba(255, 255, 255, 0.18)",
+        meta: "rgba(255, 251, 235, 0.82)",
+        status: "#fde68a",
+        text: "#ffffff",
       };
     }
 
     return {
-      accent: "#b92323",
-      background: "linear-gradient(135deg, #ffe9e5 0%, #ff9e8c 52%, #f04444 100%)",
-      border: "rgba(185, 35, 35, 0.34)",
-      status: "#9f1d1d",
+      accent: "#fca5a5",
+      background: "linear-gradient(135deg, #3f1515 0%, #7f1d1d 56%, #b91c1c 100%)",
+      border: "rgba(252, 165, 165, 0.5)",
+      iconBackground: "rgba(255, 255, 255, 0.12)",
+      iconHighlight: "rgba(255, 255, 255, 0.18)",
+      meta: "rgba(254, 242, 242, 0.82)",
+      status: "#fecaca",
+      text: "#ffffff",
     };
   }
 
