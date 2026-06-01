@@ -293,7 +293,13 @@ class RecurrenceTrackerCard extends HTMLElement {
   }
 
   _shouldShow(option) {
-    return this.config[option] !== false;
+    const value = this.config[option];
+
+    if (typeof value === "string") {
+      return !["false", "0", "off", "no"].includes(value.trim().toLowerCase());
+    }
+
+    return value !== false && value !== 0;
   }
 
   _getPalette(elapsedPercent) {
