@@ -46,8 +46,11 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
         """Initialize the task sensor."""
         self._hass = hass
         self._entry = entry
-        self._task_name = entry.data[CONF_TASK_NAME]
-        self._frequency_days = entry.data[CONF_FREQUENCY_DAYS]
+        self._task_name = entry.options.get(CONF_TASK_NAME, entry.data[CONF_TASK_NAME])
+        self._frequency_days = entry.options.get(
+            CONF_FREQUENCY_DAYS,
+            entry.data[CONF_FREQUENCY_DAYS],
+        )
         self._last_completed: date | None = None
         self._store = Store(
             hass,
@@ -56,7 +59,7 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
         )
 
         self._attr_name = self._task_name
-        self._attr_icon = entry.data[CONF_ICON]
+        self._attr_icon = entry.options.get(CONF_ICON, entry.data[CONF_ICON])
         self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}"
 
     @property
@@ -143,6 +146,21 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
         """Clear the task completion date."""
         self._last_completed = None
         await self._store.async_save({ATTR_LAST_COMPLETED: None})
+        self.async_write_ha_state()
+
+    @callback
+    def async_update_task_options(
+        self,
+        *,
+        task_name: str,
+        frequency_days: int,
+        icon: str,
+    ) -> None:
+        """Apply editable task options without recreating the entity."""
+        self._task_name = task_name
+        self._frequency_days = frequency_days
+        self._attr_name = task_name
+        self._attr_icon = icon
         self.async_write_ha_state()
 
     async def _save_last_completed(self) -> None:

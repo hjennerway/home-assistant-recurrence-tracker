@@ -20,11 +20,15 @@
     "step": {
       "init": {
         "title": "Task options",
-        "description": "Override the date this task was last reset or completed.",
+        "description": "Update the details for this recurring task.",
         "data": {
+          "task_name": "Display name",
+          "icon": "Icon",
+          "frequency_days": "Frequency in days",
           "last_completed": "Last reset date"
         },
         "data_description": {
+          "icon": "Use an MDI icon name, such as mdi:check-circle-outline.",
           "last_completed": "Use YYYY-MM-DD."
         }
       }
