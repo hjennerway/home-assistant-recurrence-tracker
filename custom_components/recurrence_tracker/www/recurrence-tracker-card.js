@@ -75,6 +75,7 @@ class RecurrenceTrackerCard extends HTMLElement {
           --recurrence-tracker-accent: ${palette.accent};
           background: ${palette.background};
           border: 1px solid ${palette.border};
+          container-type: inline-size;
           cursor: pointer;
           outline: none;
           overflow: hidden;
@@ -136,6 +137,7 @@ class RecurrenceTrackerCard extends HTMLElement {
         .count {
           flex: 0 0 auto;
           margin-left: auto;
+          min-width: 0;
         }
 
         .days {
@@ -157,13 +159,69 @@ class RecurrenceTrackerCard extends HTMLElement {
           white-space: nowrap;
         }
 
-        @media (max-width: 360px) {
+        @container (max-width: 420px) {
           .content {
-            flex-wrap: wrap;
+            align-items: center;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            grid-template-areas:
+              "icon details"
+              "count count";
+            row-gap: 10px;
+          }
+
+          .icon {
+            grid-area: icon;
+          }
+
+          .details {
+            grid-area: details;
           }
 
           .count {
-            flex-basis: 100%;
+            display: grid;
+            gap: 4px 10px;
+            grid-area: count;
+            grid-template-columns: minmax(0, 1fr) auto;
+            justify-self: stretch;
+            margin-left: 0;
+          }
+
+          .days {
+            font-size: 1.35rem;
+            text-align: left;
+          }
+
+          .status {
+            align-self: end;
+            margin-top: 0;
+          }
+        }
+
+        @container (max-width: 240px) {
+          .content {
+            grid-template-areas:
+              "icon details"
+              "count count";
+            grid-template-columns: auto minmax(0, 1fr);
+          }
+
+          .icon {
+            height: 40px;
+            width: 40px;
+          }
+
+          ha-icon {
+            --mdc-icon-size: 24px;
+          }
+
+          .count {
+            grid-template-columns: 1fr;
+          }
+
+          .days,
+          .status {
+            text-align: left;
           }
         }
       </style>
