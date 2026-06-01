@@ -78,7 +78,7 @@ class RecurrenceTrackerCard extends HTMLElement {
           gap: 16px;
           grid-template-columns: auto 1fr auto;
           min-height: 84px;
-          padding: 0 16px;
+          padding: 0 12px;
         }
 
         .icon {
