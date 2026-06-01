@@ -48,7 +48,7 @@ class RecurrenceTrackerCard extends HTMLElement {
     const palette = this._getPalette(elapsedPercent);
     const isDue = hasCompletion && Number.isFinite(frequency) && days >= frequency;
     const daysLabel = hasCompletion
-      ? `${days} ${days === 1 ? "day" : "days"}`
+      ? `${days} ${days === 1 ? "day" : "days"} ago`
       : "Never";
     const statusLabel = hasCompletion
       ? isDue
@@ -178,7 +178,7 @@ class RecurrenceTrackerCard extends HTMLElement {
   }
 
   _getPalette(elapsedPercent) {
-    if (elapsedPercent <= 40) {
+    if (elapsedPercent < 40) {
       return {
         accent: "#16803a",
         background: "linear-gradient(135deg, #f3ffe8 0%, #c9f8a8 50%, #7edb73 100%)",
