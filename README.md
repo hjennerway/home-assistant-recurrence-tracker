@@ -39,6 +39,9 @@ type: custom:recurrence-tracker-card
 entity: sensor.water_plants
 ```
 
+The card supports the Home Assistant visual editor, including controls for the
+entity, optional name/icon overrides, and the `show_*` visibility switches.
+
 Optional overrides:
 
 ```yaml
@@ -55,6 +58,10 @@ show_icon: true
 
 Set any `show_*` option to `false` to hide that part of the card. The `name`
 option overrides the display name on this card only.
+
+The browser console logs `RECURRENCE TRACKER CARD v<version>` when the card
+resource loads. If the version is missing or old, clear the Home Assistant
+frontend cache or add a cache-busting query string to the Lovelace resource URL.
 
 Tapping anywhere on the card asks:
 

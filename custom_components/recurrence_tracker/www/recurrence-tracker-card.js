@@ -1,4 +1,64 @@
+const RECURRENCE_TRACKER_CARD_VERSION = "0.1.2";
+const RECURRENCE_TRACKER_CARD_SHOW_OPTIONS = [
+  "show_days_ago",
+  "show_frequency",
+  "show_name",
+  "show_days_until_due",
+  "show_icon",
+];
+const RECURRENCE_TRACKER_CARD_DEFAULT_CONFIG = {
+  show_days_ago: true,
+  show_frequency: true,
+  show_name: true,
+  show_days_until_due: true,
+  show_icon: true,
+};
+const RECURRENCE_TRACKER_CARD_EDITOR_SCHEMA = [
+  { name: "entity", required: true, selector: { entity: { domain: "sensor" } } },
+  { name: "name", selector: { text: {} } },
+  { name: "icon", selector: { icon: {} } },
+  { name: "show_name", selector: { boolean: {} } },
+  { name: "show_icon", selector: { boolean: {} } },
+  { name: "show_days_ago", selector: { boolean: {} } },
+  { name: "show_days_until_due", selector: { boolean: {} } },
+  { name: "show_frequency", selector: { boolean: {} } },
+];
+const RECURRENCE_TRACKER_CARD_EDITOR_LABELS = {
+  entity: "Entity",
+  name: "Name override",
+  icon: "Icon override",
+  show_name: "Show name",
+  show_icon: "Show icon",
+  show_days_ago: "Show days ago",
+  show_days_until_due: "Show days until due",
+  show_frequency: "Show frequency",
+};
+
+console.info(
+  `%cRECURRENCE TRACKER CARD%c v${RECURRENCE_TRACKER_CARD_VERSION}`,
+  "color: #ffffff; background: #166534; font-weight: 700; padding: 2px 6px; border-radius: 4px;",
+  "color: #166534; font-weight: 700;"
+);
+
 class RecurrenceTrackerCard extends HTMLElement {
+  static async getConfigElement() {
+    return document.createElement("recurrence-tracker-card-editor");
+  }
+
+  static getStubConfig(hass) {
+    const entity = Object.keys(hass.states).find(
+      (entityId) =>
+        entityId.startsWith("sensor.") &&
+        hass.states[entityId].attributes.frequency_days !== undefined
+    );
+
+    return {
+      type: "custom:recurrence-tracker-card",
+      entity: entity || "",
+      ...RECURRENCE_TRACKER_CARD_DEFAULT_CONFIG,
+    };
+  }
+
   setConfig(config) {
     if (!config.entity) {
       throw new Error("Entity is required");
@@ -375,11 +435,105 @@ class RecurrenceTrackerCard extends HTMLElement {
   }
 }
 
-customElements.define("recurrence-tracker-card", RecurrenceTrackerCard);
+class RecurrenceTrackerCardEditor extends HTMLElement {
+  setConfig(config) {
+    this._config = {
+      ...RECURRENCE_TRACKER_CARD_DEFAULT_CONFIG,
+      ...config,
+    };
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
+  _render() {
+    if (!this._hass || !this._config) {
+      return;
+    }
+
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: "open" });
+    }
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        ha-form {
+          display: block;
+        }
+      </style>
+      <ha-form></ha-form>
+    `;
+
+    const form = this.shadowRoot.querySelector("ha-form");
+    form.hass = this._hass;
+    form.data = this._config;
+    form.schema = RECURRENCE_TRACKER_CARD_EDITOR_SCHEMA;
+    form.computeLabel = (schema) =>
+      RECURRENCE_TRACKER_CARD_EDITOR_LABELS[schema.name] || schema.name;
+    form.addEventListener("value-changed", (event) => {
+      const config = this._cleanConfig({
+        ...RECURRENCE_TRACKER_CARD_DEFAULT_CONFIG,
+        ...event.detail.value,
+      });
+
+      this._config = config;
+      this._fireConfigChanged(config);
+    });
+  }
+
+  _cleanConfig(config) {
+    const cleanedConfig = { ...config };
+
+    for (const option of RECURRENCE_TRACKER_CARD_SHOW_OPTIONS) {
+      cleanedConfig[option] = this._normalizeBoolean(cleanedConfig[option]);
+    }
+
+    if (!cleanedConfig.name) {
+      delete cleanedConfig.name;
+    }
+
+    if (!cleanedConfig.icon) {
+      delete cleanedConfig.icon;
+    }
+
+    return cleanedConfig;
+  }
+
+  _normalizeBoolean(value) {
+    if (typeof value === "string") {
+      return !["false", "0", "off", "no"].includes(value.trim().toLowerCase());
+    }
+
+    return value !== false && value !== 0;
+  }
+
+  _fireConfigChanged(config) {
+    const event = new Event("config-changed", {
+      bubbles: true,
+      composed: true,
+    });
+    event.detail = { config };
+    this.dispatchEvent(event);
+  }
+}
+
+if (!customElements.get("recurrence-tracker-card")) {
+  customElements.define("recurrence-tracker-card", RecurrenceTrackerCard);
+}
+
+if (!customElements.get("recurrence-tracker-card-editor")) {
+  customElements.define("recurrence-tracker-card-editor", RecurrenceTrackerCardEditor);
+}
 
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: "recurrence-tracker-card",
-  name: "Recurrence Tracker Card",
-  description: "Show a recurring task and mark it complete.",
-});
+if (!window.customCards.some((card) => card.type === "recurrence-tracker-card")) {
+  window.customCards.push({
+    type: "recurrence-tracker-card",
+    name: "Recurrence Tracker Card",
+    description: "Show a recurring task and mark it complete.",
+    preview: true,
+  });
+}
