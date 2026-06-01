@@ -75,10 +75,10 @@ class RecurrenceTrackerCard extends HTMLElement {
         .content {
           align-items: center;
           display: grid;
-          gap: 16px;
+          gap: 12px;
           grid-template-columns: auto 1fr auto;
-          min-height: 84px;
-          padding: 0 12px;
+          min-height: 68px;
+          padding: 8px 10px;
         }
 
         .icon {
