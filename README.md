@@ -40,7 +40,8 @@ entity: sensor.water_plants
 ```
 
 The card supports the Home Assistant visual editor, including controls for the
-entity, optional name/icon overrides, and the `show_*` visibility switches.
+entity, optional name/icon overrides, the `show_*` visibility switches, color
+thresholds, and font-size overrides.
 
 Optional overrides:
 
@@ -54,10 +55,24 @@ show_frequency: true
 show_name: true
 show_days_until_due: true
 show_icon: true
+warning_threshold: 40
+due_threshold: 80
+name_font_size: 1.05rem
+frequency_font_size: 0.85rem
+days_ago_font_size: 1.55rem
+days_until_due_font_size: 0.78rem
+icon_size: 28px
 ```
 
 Set any `show_*` option to `false` to hide that part of the card. The `name`
 option overrides the display name on this card only.
+
+Color thresholds are percentages of the configured frequency. The card is green
+below `warning_threshold`, amber from `warning_threshold` through
+`due_threshold`, and red above `due_threshold`.
+
+Font-size overrides accept CSS lengths such as `18px`, `1.2rem`, `1em`, or
+`90%`. A bare number is treated as pixels.
 
 The browser console logs `RECURRENCE TRACKER CARD v<version>` when the card
 resource loads. If the version is missing or old, clear the Home Assistant

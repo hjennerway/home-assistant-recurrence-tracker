@@ -1,4 +1,4 @@
-const RECURRENCE_TRACKER_CARD_VERSION = "0.1.2";
+const RECURRENCE_TRACKER_CARD_VERSION = "0.1.3";
 const RECURRENCE_TRACKER_CARD_SHOW_OPTIONS = [
   "show_days_ago",
   "show_frequency",
@@ -6,12 +6,24 @@ const RECURRENCE_TRACKER_CARD_SHOW_OPTIONS = [
   "show_days_until_due",
   "show_icon",
 ];
+const RECURRENCE_TRACKER_CARD_THRESHOLD_DEFAULTS = {
+  warning_threshold: 40,
+  due_threshold: 80,
+};
+const RECURRENCE_TRACKER_CARD_FONT_SIZE_OPTIONS = [
+  "name_font_size",
+  "frequency_font_size",
+  "days_ago_font_size",
+  "days_until_due_font_size",
+  "icon_size",
+];
 const RECURRENCE_TRACKER_CARD_DEFAULT_CONFIG = {
   show_days_ago: true,
   show_frequency: true,
   show_name: true,
   show_days_until_due: true,
   show_icon: true,
+  ...RECURRENCE_TRACKER_CARD_THRESHOLD_DEFAULTS,
 };
 const RECURRENCE_TRACKER_CARD_EDITOR_SCHEMA = [
   { name: "entity", required: true, selector: { entity: { domain: "sensor" } } },
@@ -22,6 +34,19 @@ const RECURRENCE_TRACKER_CARD_EDITOR_SCHEMA = [
   { name: "show_days_ago", selector: { boolean: {} } },
   { name: "show_days_until_due", selector: { boolean: {} } },
   { name: "show_frequency", selector: { boolean: {} } },
+  {
+    name: "warning_threshold",
+    selector: { number: { min: 0, max: 100, step: 1, mode: "box", unit_of_measurement: "%" } },
+  },
+  {
+    name: "due_threshold",
+    selector: { number: { min: 0, max: 100, step: 1, mode: "box", unit_of_measurement: "%" } },
+  },
+  { name: "name_font_size", selector: { text: {} } },
+  { name: "frequency_font_size", selector: { text: {} } },
+  { name: "days_ago_font_size", selector: { text: {} } },
+  { name: "days_until_due_font_size", selector: { text: {} } },
+  { name: "icon_size", selector: { text: {} } },
 ];
 const RECURRENCE_TRACKER_CARD_EDITOR_LABELS = {
   entity: "Entity",
@@ -32,6 +57,13 @@ const RECURRENCE_TRACKER_CARD_EDITOR_LABELS = {
   show_days_ago: "Show days ago",
   show_days_until_due: "Show days until due",
   show_frequency: "Show frequency",
+  warning_threshold: "Warning threshold",
+  due_threshold: "Due threshold",
+  name_font_size: "Name font size",
+  frequency_font_size: "Frequency font size",
+  days_ago_font_size: "Days ago font size",
+  days_until_due_font_size: "Days until due font size",
+  icon_size: "Icon size",
 };
 
 console.info(
@@ -92,6 +124,19 @@ class RecurrenceTrackerCard extends HTMLElement {
     const showIcon = this._shouldShow("show_icon");
     const showDetails = showName || showFrequency;
     const showCount = showDaysAgo || showDaysUntilDue;
+    const { warningThreshold, dueThreshold } = this._getColorThresholds();
+    const nameFontSize = this._getCssSize("name_font_size", "1.05rem");
+    const frequencyFontSize = this._getCssSize("frequency_font_size", "0.85rem");
+    const daysAgoFontSize = this._getCssSize("days_ago_font_size", "1.55rem");
+    const mobileDaysAgoFontSize = this.config.days_ago_font_size
+      ? daysAgoFontSize
+      : "1.35rem";
+    const daysUntilDueFontSize = this._getCssSize(
+      "days_until_due_font_size",
+      "0.78rem"
+    );
+    const iconSize = this._getCssSize("icon_size", "28px");
+    const narrowIconSize = this.config.icon_size ? iconSize : "24px";
     const renderSignature = [
       stateObj.state,
       attrs.task_name,
@@ -105,6 +150,13 @@ class RecurrenceTrackerCard extends HTMLElement {
       showName,
       showDaysUntilDue,
       showIcon,
+      warningThreshold,
+      dueThreshold,
+      nameFontSize,
+      frequencyFontSize,
+      daysAgoFontSize,
+      daysUntilDueFontSize,
+      iconSize,
     ].join("|");
 
     if (renderSignature === this._lastRenderSignature) {
@@ -117,7 +169,7 @@ class RecurrenceTrackerCard extends HTMLElement {
       hasCompletion && Number.isFinite(frequency) && frequency > 0
         ? (days / frequency) * 100
         : 100;
-    const palette = this._getPalette(elapsedPercent);
+    const palette = this._getPalette(elapsedPercent, warningThreshold, dueThreshold);
     const isDue = hasCompletion && Number.isFinite(frequency) && days >= frequency;
     const daysLabel = hasCompletion
       ? `${days} ${days === 1 ? "day" : "days"} ago`
@@ -133,6 +185,13 @@ class RecurrenceTrackerCard extends HTMLElement {
       <style>
         ha-card {
           --recurrence-tracker-accent: ${palette.accent};
+          --recurrence-tracker-days-font-size: ${daysAgoFontSize};
+          --recurrence-tracker-days-font-size-mobile: ${mobileDaysAgoFontSize};
+          --recurrence-tracker-frequency-font-size: ${frequencyFontSize};
+          --recurrence-tracker-icon-size: ${iconSize};
+          --recurrence-tracker-icon-size-narrow: ${narrowIconSize};
+          --recurrence-tracker-name-font-size: ${nameFontSize};
+          --recurrence-tracker-status-font-size: ${daysUntilDueFontSize};
           background: ${palette.background};
           border: 1px solid ${palette.border};
           container-type: inline-size;
@@ -168,7 +227,7 @@ class RecurrenceTrackerCard extends HTMLElement {
         }
 
         ha-icon {
-          --mdc-icon-size: 28px;
+          --mdc-icon-size: var(--recurrence-tracker-icon-size);
         }
 
         .details {
@@ -178,7 +237,7 @@ class RecurrenceTrackerCard extends HTMLElement {
 
         .name {
           color: ${palette.text};
-          font-size: 1.05rem;
+          font-size: var(--recurrence-tracker-name-font-size);
           font-weight: 600;
           line-height: 1.25;
           overflow-wrap: break-word;
@@ -186,7 +245,7 @@ class RecurrenceTrackerCard extends HTMLElement {
 
         .meta {
           color: ${palette.meta};
-          font-size: 0.85rem;
+          font-size: var(--recurrence-tracker-frequency-font-size);
           line-height: 1.35;
           margin-top: 4px;
         }
@@ -205,7 +264,7 @@ class RecurrenceTrackerCard extends HTMLElement {
 
         .days {
           color: ${palette.text};
-          font-size: 1.55rem;
+          font-size: var(--recurrence-tracker-days-font-size);
           font-weight: 700;
           line-height: 1;
           text-align: right;
@@ -214,7 +273,7 @@ class RecurrenceTrackerCard extends HTMLElement {
 
         .status {
           color: ${palette.status};
-          font-size: 0.78rem;
+          font-size: var(--recurrence-tracker-status-font-size);
           font-weight: 600;
           line-height: 1.2;
           margin-top: 6px;
@@ -251,7 +310,7 @@ class RecurrenceTrackerCard extends HTMLElement {
           }
 
           .days {
-            font-size: 1.35rem;
+            font-size: var(--recurrence-tracker-days-font-size-mobile);
             text-align: right;
           }
 
@@ -276,7 +335,7 @@ class RecurrenceTrackerCard extends HTMLElement {
           }
 
           ha-icon {
-            --mdc-icon-size: 24px;
+            --mdc-icon-size: var(--recurrence-tracker-icon-size-narrow);
           }
 
           .count {
@@ -362,8 +421,54 @@ class RecurrenceTrackerCard extends HTMLElement {
     return value !== false && value !== 0;
   }
 
-  _getPalette(elapsedPercent) {
-    if (elapsedPercent < 40) {
+  _getColorThresholds() {
+    const warningThreshold = this._getNumberConfig("warning_threshold", 40, 0, 100);
+    const dueThreshold = this._getNumberConfig(
+      "due_threshold",
+      80,
+      warningThreshold,
+      100
+    );
+
+    return { warningThreshold, dueThreshold };
+  }
+
+  _getNumberConfig(option, fallback, min, max) {
+    const value = Number(this.config[option]);
+
+    if (!Number.isFinite(value)) {
+      return fallback;
+    }
+
+    return Math.min(Math.max(value, min), max);
+  }
+
+  _getCssSize(option, fallback) {
+    const value = this.config[option];
+
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+      return `${value}px`;
+    }
+
+    if (value === undefined || value === null || value === "") {
+      return fallback;
+    }
+
+    const normalized = String(value).trim();
+
+    if (/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(normalized)) {
+      return `${normalized}px`;
+    }
+
+    if (/^(?:\d+(?:\.\d+)?|\.\d+)(?:px|rem|em|%)$/.test(normalized)) {
+      return normalized;
+    }
+
+    return fallback;
+  }
+
+  _getPalette(elapsedPercent, warningThreshold, dueThreshold) {
+    if (elapsedPercent < warningThreshold) {
       return {
         accent: "#86efac",
         background: "linear-gradient(135deg, #123524 0%, #166534 56%, #15803d 100%)",
@@ -376,7 +481,7 @@ class RecurrenceTrackerCard extends HTMLElement {
       };
     }
 
-    if (elapsedPercent <= 80) {
+    if (elapsedPercent <= dueThreshold) {
       return {
         accent: "#fcd34d",
         background: "linear-gradient(135deg, #3b2f0b 0%, #854d0e 56%, #b45309 100%)",
@@ -491,6 +596,25 @@ class RecurrenceTrackerCardEditor extends HTMLElement {
       cleanedConfig[option] = this._normalizeBoolean(cleanedConfig[option]);
     }
 
+    for (const [option, fallback] of Object.entries(
+      RECURRENCE_TRACKER_CARD_THRESHOLD_DEFAULTS
+    )) {
+      cleanedConfig[option] = this._normalizeNumber(cleanedConfig[option], fallback);
+    }
+
+    if (cleanedConfig.due_threshold < cleanedConfig.warning_threshold) {
+      cleanedConfig.due_threshold = cleanedConfig.warning_threshold;
+    }
+
+    for (const option of RECURRENCE_TRACKER_CARD_FONT_SIZE_OPTIONS) {
+      if (!cleanedConfig[option]) {
+        delete cleanedConfig[option];
+        continue;
+      }
+
+      cleanedConfig[option] = String(cleanedConfig[option]).trim();
+    }
+
     if (!cleanedConfig.name) {
       delete cleanedConfig.name;
     }
@@ -508,6 +632,16 @@ class RecurrenceTrackerCardEditor extends HTMLElement {
     }
 
     return value !== false && value !== 0;
+  }
+
+  _normalizeNumber(value, fallback) {
+    const number = Number(value);
+
+    if (!Number.isFinite(number)) {
+      return fallback;
+    }
+
+    return Math.min(Math.max(number, 0), 100);
   }
 
   _fireConfigChanged(config) {
