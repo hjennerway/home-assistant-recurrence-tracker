@@ -1,4 +1,4 @@
-const RECURRENCE_TRACKER_CARD_VERSION = "0.1.4";
+const RECURRENCE_TRACKER_CARD_VERSION = "0.1.5";
 const RECURRENCE_TRACKER_CARD_ORIENTATIONS = ["default", "stacked"];
 const RECURRENCE_TRACKER_CARD_SHOW_OPTIONS = [
   "show_days_ago",
@@ -298,8 +298,12 @@ class RecurrenceTrackerCard extends HTMLElement {
         }
 
         .stack {
+          align-items: flex-start;
+          display: flex;
+          flex-direction: column;
           grid-area: stack;
           min-width: 0;
+          text-align: left;
         }
 
         .name {
@@ -349,15 +353,25 @@ class RecurrenceTrackerCard extends HTMLElement {
         }
 
         .content-stacked .count {
+          align-self: stretch;
+          justify-self: stretch;
           margin-left: 0;
           margin-top: 6px;
           max-width: 100%;
+          text-align: left;
+          width: 100%;
         }
 
         .content-stacked .stack > :first-child {
           margin-top: 0;
         }
 
+        .content-stacked .details {
+          width: 100%;
+        }
+
+        .content-stacked .name,
+        .content-stacked .meta,
         .content-stacked .days,
         .content-stacked .status {
           text-align: left;
@@ -413,6 +427,14 @@ class RecurrenceTrackerCard extends HTMLElement {
 
           .content-stacked .status {
             margin-top: 6px;
+            text-align: left;
+          }
+
+          .content-stacked .count {
+            justify-self: stretch;
+          }
+
+          .content-stacked .days {
             text-align: left;
           }
         }
