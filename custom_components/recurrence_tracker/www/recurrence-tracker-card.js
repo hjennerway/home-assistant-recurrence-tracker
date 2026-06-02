@@ -1,4 +1,4 @@
-const RECURRENCE_TRACKER_CARD_VERSION = "0.1.5";
+const RECURRENCE_TRACKER_CARD_VERSION = "0.1.6";
 const RECURRENCE_TRACKER_CARD_ORIENTATIONS = ["default", "stacked"];
 const RECURRENCE_TRACKER_CARD_SHOW_OPTIONS = [
   "show_days_ago",
@@ -196,7 +196,29 @@ class RecurrenceTrackerCard extends HTMLElement {
         ? "Due"
         : `${Math.max(frequency - days, 0)} ${frequency - days === 1 ? "day" : "days"} left`
       : "Not completed";
-    const detailsHtml = showDetails
+    const stackedLabelsHtml = isStacked
+      ? `<div class="stack">
+            ${showName ? `<div class="name">${this._escapeHtml(name)}</div>` : ""}
+            ${
+              showFrequency
+                ? `<div class="meta">Every ${this._escapeHtml(String(frequency))} ${
+                    frequency === 1 ? "day" : "days"
+                  }</div>`
+                : ""
+            }
+            ${
+              showDaysAgo
+                ? `<div class="days">${this._escapeHtml(daysLabel)}</div>`
+                : ""
+            }
+            ${
+              showDaysUntilDue
+                ? `<div class="status">${this._escapeHtml(statusLabel)}</div>`
+                : ""
+            }
+          </div>`
+      : "";
+    const detailsHtml = !isStacked && showDetails
       ? `<div class="details">
             ${showName ? `<div class="name">${this._escapeHtml(name)}</div>` : ""}
             ${
@@ -208,7 +230,7 @@ class RecurrenceTrackerCard extends HTMLElement {
             }
           </div>`
       : "";
-    const countHtml = showCount
+    const countHtml = !isStacked && showCount
       ? `<div class="count">
             ${
               showDaysAgo
@@ -223,7 +245,7 @@ class RecurrenceTrackerCard extends HTMLElement {
           </div>`
       : "";
     const labelsHtml = isStacked
-      ? `<div class="stack">${detailsHtml}${countHtml}</div>`
+      ? stackedLabelsHtml
       : `${detailsHtml}${countHtml}`;
 
     this._taskName = name;
@@ -352,22 +374,8 @@ class RecurrenceTrackerCard extends HTMLElement {
           white-space: nowrap;
         }
 
-        .content-stacked .count {
-          align-self: stretch;
-          justify-self: stretch;
-          margin-left: 0;
-          margin-top: 6px;
-          max-width: 100%;
-          text-align: left;
-          width: 100%;
-        }
-
         .content-stacked .stack > :first-child {
           margin-top: 0;
-        }
-
-        .content-stacked .details {
-          width: 100%;
         }
 
         .content-stacked .name,
@@ -429,11 +437,6 @@ class RecurrenceTrackerCard extends HTMLElement {
             margin-top: 6px;
             text-align: left;
           }
-
-          .content-stacked .count {
-            justify-self: stretch;
-          }
-
           .content-stacked .days {
             text-align: left;
           }
