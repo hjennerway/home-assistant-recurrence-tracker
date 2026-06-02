@@ -40,8 +40,8 @@ entity: sensor.water_plants
 ```
 
 The card supports the Home Assistant visual editor, including controls for the
-entity, optional name/icon overrides, the `show_*` visibility switches, color
-thresholds, and font-size overrides.
+entity, optional name/icon overrides, orientation, the `show_*` visibility
+switches, color thresholds, and font-size overrides.
 
 Optional overrides:
 
@@ -50,6 +50,7 @@ type: custom:recurrence-tracker-card
 entity: sensor.water_plants
 name: Water plants
 icon: mdi:watering-can
+orientation: default
 show_days_ago: true
 show_frequency: true
 show_name: true
@@ -66,6 +67,10 @@ icon_size: 28px
 
 Set any `show_*` option to `false` to hide that part of the card. The `name`
 option overrides the display name on this card only.
+
+Set `orientation` to `stacked` to keep the icon in a left column and stack the
+name, frequency, days-ago, and days-until-due labels vertically on the right.
+The default orientation keeps the original layout.
 
 Color thresholds are percentages of the configured frequency. The card is green
 below `warning_threshold`, amber from `warning_threshold` through

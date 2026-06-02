@@ -1,4 +1,5 @@
-const RECURRENCE_TRACKER_CARD_VERSION = "0.1.3";
+const RECURRENCE_TRACKER_CARD_VERSION = "0.1.4";
+const RECURRENCE_TRACKER_CARD_ORIENTATIONS = ["default", "stacked"];
 const RECURRENCE_TRACKER_CARD_SHOW_OPTIONS = [
   "show_days_ago",
   "show_frequency",
@@ -18,6 +19,7 @@ const RECURRENCE_TRACKER_CARD_FONT_SIZE_OPTIONS = [
   "icon_size",
 ];
 const RECURRENCE_TRACKER_CARD_DEFAULT_CONFIG = {
+  orientation: "default",
   show_days_ago: true,
   show_frequency: true,
   show_name: true,
@@ -29,6 +31,17 @@ const RECURRENCE_TRACKER_CARD_EDITOR_SCHEMA = [
   { name: "entity", required: true, selector: { entity: { domain: "sensor" } } },
   { name: "name", selector: { text: {} } },
   { name: "icon", selector: { icon: {} } },
+  {
+    name: "orientation",
+    selector: {
+      select: {
+        options: [
+          { value: "default", label: "Default" },
+          { value: "stacked", label: "Stacked" },
+        ],
+      },
+    },
+  },
   { name: "show_name", selector: { boolean: {} } },
   { name: "show_icon", selector: { boolean: {} } },
   { name: "show_days_ago", selector: { boolean: {} } },
@@ -52,6 +65,7 @@ const RECURRENCE_TRACKER_CARD_EDITOR_LABELS = {
   entity: "Entity",
   name: "Name override",
   icon: "Icon override",
+  orientation: "Orientation",
   show_name: "Show name",
   show_icon: "Show icon",
   show_days_ago: "Show days ago",
@@ -124,6 +138,8 @@ class RecurrenceTrackerCard extends HTMLElement {
     const showIcon = this._shouldShow("show_icon");
     const showDetails = showName || showFrequency;
     const showCount = showDaysAgo || showDaysUntilDue;
+    const orientation = this._getOrientation();
+    const isStacked = orientation === "stacked";
     const { warningThreshold, dueThreshold } = this._getColorThresholds();
     const nameFontSize = this._getCssSize("name_font_size", "1.05rem");
     const frequencyFontSize = this._getCssSize("frequency_font_size", "0.85rem");
@@ -150,6 +166,7 @@ class RecurrenceTrackerCard extends HTMLElement {
       showName,
       showDaysUntilDue,
       showIcon,
+      orientation,
       warningThreshold,
       dueThreshold,
       nameFontSize,
@@ -179,6 +196,35 @@ class RecurrenceTrackerCard extends HTMLElement {
         ? "Due"
         : `${Math.max(frequency - days, 0)} ${frequency - days === 1 ? "day" : "days"} left`
       : "Not completed";
+    const detailsHtml = showDetails
+      ? `<div class="details">
+            ${showName ? `<div class="name">${this._escapeHtml(name)}</div>` : ""}
+            ${
+              showFrequency
+                ? `<div class="meta">Every ${this._escapeHtml(String(frequency))} ${
+                    frequency === 1 ? "day" : "days"
+                  }</div>`
+                : ""
+            }
+          </div>`
+      : "";
+    const countHtml = showCount
+      ? `<div class="count">
+            ${
+              showDaysAgo
+                ? `<div class="days">${this._escapeHtml(daysLabel)}</div>`
+                : ""
+            }
+            ${
+              showDaysUntilDue
+                ? `<div class="status">${this._escapeHtml(statusLabel)}</div>`
+                : ""
+            }
+          </div>`
+      : "";
+    const labelsHtml = isStacked
+      ? `<div class="stack">${detailsHtml}${countHtml}</div>`
+      : `${detailsHtml}${countHtml}`;
 
     this._taskName = name;
     this.shadowRoot.innerHTML = `
@@ -213,6 +259,18 @@ class RecurrenceTrackerCard extends HTMLElement {
           padding: 8px 10px;
         }
 
+        .content-stacked {
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr);
+          grid-template-areas: "icon stack";
+          justify-items: stretch;
+        }
+
+        .content-stacked.content-no-icon {
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-areas: "stack";
+        }
+
         .icon {
           align-items: center;
           background: ${palette.iconBackground};
@@ -226,12 +284,21 @@ class RecurrenceTrackerCard extends HTMLElement {
           width: 48px;
         }
 
+        .content-stacked .icon {
+          grid-area: icon;
+        }
+
         ha-icon {
           --mdc-icon-size: var(--recurrence-tracker-icon-size);
         }
 
         .details {
           flex: 1 1 auto;
+          min-width: 0;
+        }
+
+        .stack {
+          grid-area: stack;
           min-width: 0;
         }
 
@@ -281,6 +348,21 @@ class RecurrenceTrackerCard extends HTMLElement {
           white-space: nowrap;
         }
 
+        .content-stacked .count {
+          margin-left: 0;
+          margin-top: 6px;
+          max-width: 100%;
+        }
+
+        .content-stacked .stack > :first-child {
+          margin-top: 0;
+        }
+
+        .content-stacked .days,
+        .content-stacked .status {
+          text-align: left;
+        }
+
         @container (max-width: 420px) {
           .content {
             align-items: center;
@@ -292,6 +374,16 @@ class RecurrenceTrackerCard extends HTMLElement {
             gap: 10px 12px;
             min-height: auto;
             padding: 10px 12px;
+          }
+
+          .content-stacked {
+            grid-template-areas: "icon stack";
+            grid-template-columns: auto minmax(0, 1fr);
+          }
+
+          .content-stacked.content-no-icon {
+            grid-template-areas: "stack";
+            grid-template-columns: minmax(0, 1fr);
           }
 
           .icon {
@@ -318,10 +410,15 @@ class RecurrenceTrackerCard extends HTMLElement {
             margin-top: 0;
             text-align: right;
           }
+
+          .content-stacked .status {
+            margin-top: 6px;
+            text-align: left;
+          }
         }
 
         @container (max-width: 240px) {
-          .content {
+          .content:not(.content-stacked) {
             grid-template-areas:
               "icon"
               "details"
@@ -351,7 +448,11 @@ class RecurrenceTrackerCard extends HTMLElement {
       <ha-card role="button" tabindex="0" aria-label="Mark ${this._escapeAttr(
         name
       )} complete">
-        <div class="content">
+        <div class="${
+          isStacked
+            ? `content content-stacked${showIcon ? "" : " content-no-icon"}`
+            : "content"
+        }">
           ${
             showIcon
               ? `<div class="icon">
@@ -359,40 +460,7 @@ class RecurrenceTrackerCard extends HTMLElement {
           </div>`
               : ""
           }
-          ${
-            showDetails
-              ? `<div class="details">
-            ${
-              showName
-                ? `<div class="name">${this._escapeHtml(name)}</div>`
-                : ""
-            }
-            ${
-              showFrequency
-                ? `<div class="meta">Every ${this._escapeHtml(String(frequency))} ${
-                    frequency === 1 ? "day" : "days"
-                  }</div>`
-                : ""
-            }
-          </div>`
-              : ""
-          }
-          ${
-            showCount
-              ? `<div class="count">
-            ${
-              showDaysAgo
-                ? `<div class="days">${this._escapeHtml(daysLabel)}</div>`
-                : ""
-            }
-            ${
-              showDaysUntilDue
-                ? `<div class="status">${this._escapeHtml(statusLabel)}</div>`
-                : ""
-            }
-          </div>`
-              : ""
-          }
+          ${labelsHtml}
         </div>
       </ha-card>
     `;
@@ -419,6 +487,16 @@ class RecurrenceTrackerCard extends HTMLElement {
     }
 
     return value !== false && value !== 0;
+  }
+
+  _getOrientation() {
+    const orientation = String(this.config.orientation || "default")
+      .trim()
+      .toLowerCase();
+
+    return RECURRENCE_TRACKER_CARD_ORIENTATIONS.includes(orientation)
+      ? orientation
+      : "default";
   }
 
   _getColorThresholds() {
@@ -592,6 +670,8 @@ class RecurrenceTrackerCardEditor extends HTMLElement {
   _cleanConfig(config) {
     const cleanedConfig = { ...config };
 
+    cleanedConfig.orientation = this._normalizeOrientation(cleanedConfig.orientation);
+
     for (const option of RECURRENCE_TRACKER_CARD_SHOW_OPTIONS) {
       cleanedConfig[option] = this._normalizeBoolean(cleanedConfig[option]);
     }
@@ -632,6 +712,14 @@ class RecurrenceTrackerCardEditor extends HTMLElement {
     }
 
     return value !== false && value !== 0;
+  }
+
+  _normalizeOrientation(value) {
+    const orientation = String(value || "default").trim().toLowerCase();
+
+    return RECURRENCE_TRACKER_CARD_ORIENTATIONS.includes(orientation)
+      ? orientation
+      : "default";
   }
 
   _normalizeNumber(value, fallback) {
