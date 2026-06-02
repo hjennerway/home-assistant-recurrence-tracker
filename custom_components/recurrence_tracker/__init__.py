@@ -83,8 +83,8 @@ async def _async_register_static_path(hass: HomeAssistant) -> None:
         and hasattr(hass.http, "async_register_static_paths")
     ):
         await hass.http.async_register_static_paths(
-            [StaticPathConfig(url_path, str(path), cache_headers=True)]
+            [StaticPathConfig(url_path, str(path), cache_headers=False)]
         )
         return
 
-    hass.http.register_static_path(url_path, str(path), cache_headers=True)
+    hass.http.register_static_path(url_path, str(path), cache_headers=False)

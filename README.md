@@ -32,6 +32,14 @@ url: /recurrence_tracker/recurrence-tracker-card.js
 type: module
 ```
 
+If Home Assistant keeps serving an older card after an update, add or change a
+cache-busting query string on the resource URL, for example:
+
+```yaml
+url: /recurrence_tracker/recurrence-tracker-card.js?v=0.1.6
+type: module
+```
+
 Then add a card for a task entity:
 
 ```yaml
