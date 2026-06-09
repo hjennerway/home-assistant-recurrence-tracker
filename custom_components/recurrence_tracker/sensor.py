@@ -84,17 +84,27 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
     async def async_added_to_hass(self) -> None:
         """Restore the stored completion date."""
         configured_last_completed = self._entry.options.get(CONF_LAST_COMPLETED)
+        data = await self._store.async_load()
+        stored_last_completed = (
+            self._parse_date(data[ATTR_LAST_COMPLETED])
+            if data and data.get(ATTR_LAST_COMPLETED)
+            else None
+        )
 
         if CONF_LAST_COMPLETED in self._entry.options:
-            self._last_completed = (
+            parsed_configured_last_completed = (
                 self._parse_date(configured_last_completed)
                 if configured_last_completed
                 else None
             )
+            self._last_completed = self._resolve_last_completed(
+                parsed_configured_last_completed,
+                stored_last_completed,
+            )
+            self._sync_last_completed_option()
         else:
-            data = await self._store.async_load()
-            if data and data.get(ATTR_LAST_COMPLETED):
-                self._last_completed = self._parse_date(data[ATTR_LAST_COMPLETED])
+            if stored_last_completed:
+                self._last_completed = stored_last_completed
             else:
                 last_state = await self.async_get_last_state()
                 last_completed = (
@@ -139,12 +149,14 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
     ) -> None:
         """Set and persist the task completion date."""
         self._last_completed = last_completed
+        self._sync_last_completed_option()
         await self._save_last_completed()
         self.async_write_ha_state()
 
     async def async_clear_last_completed(self) -> None:
         """Clear the task completion date."""
         self._last_completed = None
+        self._sync_last_completed_option()
         await self._store.async_save({ATTR_LAST_COMPLETED: None})
         self.async_write_ha_state()
 
@@ -172,6 +184,35 @@ class RecurrenceTaskSensor(SensorEntity, RestoreEntity):
     def _async_handle_midnight(self, now) -> None:
         """Refresh the calculated days-since value at midnight."""
         self.async_write_ha_state()
+
+    def _resolve_last_completed(
+        self,
+        configured_last_completed: date | None,
+        stored_last_completed: date | None,
+    ) -> date | None:
+        """Resolve stale persisted dates left by older service calls."""
+        if configured_last_completed is None:
+            return None
+        if stored_last_completed is None:
+            return configured_last_completed
+
+        return max(configured_last_completed, stored_last_completed)
+
+    def _sync_last_completed_option(self) -> None:
+        """Keep the editable config option aligned with service updates."""
+        last_completed = (
+            self._last_completed.isoformat() if self._last_completed else ""
+        )
+        if self._entry.options.get(CONF_LAST_COMPLETED) == last_completed:
+            return
+
+        self._hass.config_entries.async_update_entry(
+            self._entry,
+            options={
+                **self._entry.options,
+                CONF_LAST_COMPLETED: last_completed,
+            },
+        )
 
     def _parse_date(self, value: str) -> date | None:
         """Parse a stored date, ignoring invalid stale data."""
